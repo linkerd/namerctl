@@ -1,4 +1,4 @@
-package namerd
+package namer
 
 import (
 	"encoding/json"
@@ -13,9 +13,7 @@ import (
 // XXX later we should add support for parsing dtabs
 
 type (
-	Dtab    string
-	Version string
-
+	Version       string
 	VersionedDtab struct {
 		Version Version
 		Dtab    Dtab
@@ -94,7 +92,11 @@ func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &VersionedDtab{v, Dtab(bytes)}, nil
+		dtab, err := ParseDtab(string(bytes))
+		if err != nil {
+			return nil, err
+		}
+		return &VersionedDtab{v, dtab}, nil
 
 	default:
 		return nil, fmt.Errorf("unexpected response: %s", rsp.Status)
@@ -102,7 +104,7 @@ func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 }
 
 func (ctl *httpController) Create(name string, dtab Dtab) (Version, error) {
-	req, err := ctl.dtabRequest("POST", name, strings.NewReader(string(dtab)))
+	req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtab.String()))
 	if err != nil {
 		return Version(""), err
 	}
@@ -125,7 +127,7 @@ func (ctl *httpController) Create(name string, dtab Dtab) (Version, error) {
 }
 
 func (ctl *httpController) Update(name string, dtab Dtab, version Version) (Version, error) {
-	req, err := ctl.dtabRequest("PUT", name, strings.NewReader(string(dtab)))
+	req, err := ctl.dtabRequest("PUT", name, strings.NewReader(dtab.String()))
 	if err != nil {
 		return Version(""), err
 	}
