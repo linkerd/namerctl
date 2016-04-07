@@ -22,8 +22,9 @@ type (
 	Controller interface {
 		List() ([]string, error)
 		Get(name string) (*VersionedDtab, error)
-		Create(name string, dtab Dtab) (Version, error)
-		Update(name string, dtab Dtab, version Version) (Version, error)
+		Create(name string, dtabstr string) (Version, error)
+		Delete(name string) error
+		Update(name string, dtabstr string, version Version) (Version, error)
 	}
 
 	httpController struct {
@@ -92,7 +93,7 @@ func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 		if err != nil {
 			return nil, err
 		}
-		dtab, err := ParseDtab(string(bytes))
+		dtab, err := parseDtab(string(bytes))
 		if err != nil {
 			return nil, err
 		}
@@ -103,8 +104,8 @@ func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 	}
 }
 
-func (ctl *httpController) Create(name string, dtab Dtab) (Version, error) {
-	req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtab.String()))
+func (ctl *httpController) Create(name string, dtabstr string) (Version, error) {
+	req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
 	if err != nil {
 		return Version(""), err
 	}
@@ -126,8 +127,18 @@ func (ctl *httpController) Create(name string, dtab Dtab) (Version, error) {
 	}
 }
 
-func (ctl *httpController) Update(name string, dtab Dtab, version Version) (Version, error) {
-	req, err := ctl.dtabRequest("PUT", name, strings.NewReader(dtab.String()))
+// TODO update to call DELETE when teh api supports it
+func (ctl *httpController) Delete(name string) error {
+	v, err := ctl.Get(name)
+	if err != nil {
+		return err
+	}
+	_, err = ctl.Update(name, "", v.Version)
+	return err
+}
+
+func (ctl *httpController) Update(name string, dtabstr string, version Version) (Version, error) {
+	req, err := ctl.dtabRequest("PUT", name, strings.NewReader(dtabstr))
 	if err != nil {
 		return Version(""), err
 	}

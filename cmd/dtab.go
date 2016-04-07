@@ -90,11 +90,11 @@ var (
 					return err
 				}
 				name := args[0]
-				dtab, err := readDtabPath(args[1])
+				dtabstr, err := readDtabPath(args[1])
 				if err != nil {
 					return err
 				}
-				_, err = ctl.Create(name, dtab)
+				_, err = ctl.Create(name, dtabstr)
 				if err != nil {
 					return err
 				}
@@ -119,7 +119,7 @@ var (
 					return err
 				}
 				name := args[0]
-				dtab, err := readDtabPath(args[1])
+				dtabstr, err := readDtabPath(args[1])
 				if err != nil {
 					return err
 				}
@@ -127,7 +127,7 @@ var (
 				if err != nil {
 					return err
 				}
-				_, err = ctl.Update(name, dtab, versioned.Version)
+				_, err = ctl.Update(name, dtabstr, versioned.Version)
 				if err != nil {
 					return err
 				}
@@ -152,13 +152,7 @@ var (
 					return err
 				}
 				name := args[0]
-				versioned, err := ctl.Get(name)
-				if err != nil {
-					return err
-				}
-				dtab := namer.Dtab([]*namer.Dentry{})
-				_, err = ctl.Update(name, dtab, versioned.Version)
-				if err != nil {
+				if err = ctl.Delete(name); err != nil {
 					return err
 				}
 				fmt.Printf("Deleted %s\n", name)
@@ -186,27 +180,23 @@ func init() {
 	RootCmd.AddCommand(dtabCmd)
 }
 
-func readDtabPath(path string) (namer.Dtab, error) {
+func readDtabPath(path string) (string, error) {
 	var file io.Reader
 	var err error
 	switch path {
 	case "":
-		return nil, errors.New("empty dtab path")
+		return "", errors.New("empty dtab path")
 	case "-":
 		file = os.Stdin
 	default:
 		file, err = os.Open(path)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 	}
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	dtab, err := namer.ParseDtab(string(bytes))
-	if err != nil {
-		return nil, err
-	}
-	return dtab, nil
+	return string(bytes), nil
 }

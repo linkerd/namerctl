@@ -16,12 +16,13 @@ func (dentry *Dentry) String() string {
 }
 
 var (
-	commentRE   *regexp.Regexp = regexp.MustCompile("^\\s*#.*$")
-	dentrySepRE *regexp.Regexp = regexp.MustCompile("\\s*;\\s*")
+	dentrySepRE *regexp.Regexp = regexp.MustCompile(`\s*;\s*`)
 )
 
-// ParseDtab reads a Dtab string into a list of Prefix and Destination pairs.
-func ParseDtab(dtabStr string) (Dtab, error) {
+// ParseDtab reads a Dtab string into a list of Prefix and Destination
+// pairs. The dtab string must be validated and stripped of comments
+// before being parsed.
+func parseDtab(dtabStr string) (Dtab, error) {
 	if dtabStr == "" {
 		return Dtab([]*Dentry{}), nil
 	}
