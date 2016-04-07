@@ -102,7 +102,7 @@ var (
 				return nil
 
 			default:
-				return errors.New("create requires two arguments")
+				return errors.New("create requires a name and file path")
 			}
 		},
 	}
@@ -135,7 +135,7 @@ var (
 				return nil
 
 			default:
-				return errors.New("update requires two arguments")
+				return errors.New("update requires a name and file path")
 			}
 		},
 	}
