@@ -107,6 +107,8 @@ var (
 		},
 	}
 
+	dtabUpdateVersion = ""
+
 	dtabUpdateCmd = &cobra.Command{
 		Use:     "update [name] [file]",
 		Aliases: []string{"up"},
@@ -123,17 +125,12 @@ var (
 				if err != nil {
 					return err
 				}
-				versioned, err := ctl.Get(name)
-				if err != nil {
-					return err
-				}
-				_, err = ctl.Update(name, dtabstr, versioned.Version)
+				_, err = ctl.Update(name, dtabstr, namer.Version(dtabUpdateVersion))
 				if err != nil {
 					return err
 				}
 				fmt.Printf("Updated %s\n", name)
 				return nil
-
 			default:
 				return errors.New("update requires a name and file path")
 			}
@@ -173,6 +170,7 @@ func init() {
 
 	dtabCmd.AddCommand(dtabCreateCmd)
 
+	dtabUpdateCmd.PersistentFlags().StringVar(&dtabUpdateVersion, "version", "", "only perform update if the current version matches")
 	dtabCmd.AddCommand(dtabUpdateCmd)
 
 	dtabCmd.AddCommand(dtabDeleteCmd)
