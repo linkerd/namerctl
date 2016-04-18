@@ -127,14 +127,25 @@ func (ctl *httpController) Create(name string, dtabstr string) (Version, error) 
 	}
 }
 
-// TODO update to call DELETE when teh api supports it
 func (ctl *httpController) Delete(name string) error {
-	v, err := ctl.Get(name)
+
+	req, err := ctl.dtabRequest("DELETE", name, nil)
 	if err != nil {
 		return err
 	}
-	_, err = ctl.Update(name, "", v.Version)
-	return err
+	rsp, err := ctl.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer drainAndClose(rsp)
+
+	switch rsp.StatusCode {
+	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
+		return nil
+
+	default:
+		return fmt.Errorf("unexpected response: %s", rsp.Status)
+	}
 }
 
 func (ctl *httpController) Update(name string, dtabstr string, version Version) (Version, error) {
@@ -143,7 +154,9 @@ func (ctl *httpController) Update(name string, dtabstr string, version Version) 
 		return Version(""), err
 	}
 	req.Header.Set("Content-Type", "application/dtab")
-	req.Header.Set("If-Match", string(version))
+	if version != "" {
+		req.Header.Set("If-Match", string(version))
+	}
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
