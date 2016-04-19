@@ -14,8 +14,33 @@ This utility _will change_ drastically in the near future.
 ## Usage ##
 
 ```
-:; namerctl dtab help
-Control namer's dtab interface
+$ namerctl help
+namerd manages delegation tables for linkerd.
+
+namerctl looks for a configuration file in the current working
+directory or any of its parent directories. Configuration files are
+named .namerctl.<ext> where <ext> is describes one of several formats
+including yaml, json, toml, etc.  "base-url" is currently the only
+supported configuration.  Furthermore, the base url may be specified
+via the NAMERCTL_BASE_URL environment variable.
+
+Find more information at https://linkerd.io
+
+Usage:
+  namerctl [command]
+
+Available Commands:
+  dtab        Control namerd's delegation tables
+
+Flags:
+      --base-url string   namer location (e.g. http://namerd.example.com:4080)
+      --config string     config file
+
+Use "namerctl [command] --help" for more information about a command.
+```
+```
+$ namerctl dtab help
+Control namerd's delegation tables
 
 Usage:
   namerctl dtab [command]
@@ -29,9 +54,9 @@ Available Commands:
 
 Global Flags:
       --base-url string   namer location (e.g. http://namerd.example.com:4080)
+      --config string     config file
 
-Use "namerctl dtab [command] --help" for more information about a
-command.
+Use "namerctl dtab [command] --help" for more information about a command.
 ```
 
 ## License ##

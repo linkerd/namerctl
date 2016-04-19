@@ -15,8 +15,7 @@ import (
 var (
 	dtabCmd = &cobra.Command{
 		Use:   "dtab",
-		Short: "Control namer's dtab interface",
-		Long:  ``,
+		Short: "Control namerd's delegation tables",
 	}
 
 	dtabListCmd = &cobra.Command{
