@@ -169,7 +169,8 @@ func init() {
 
 	dtabCmd.AddCommand(dtabCreateCmd)
 
-	dtabUpdateCmd.PersistentFlags().StringVar(&dtabUpdateVersion, "version", "", "only perform update if the current version matches")
+	dtabUpdateCmd.PersistentFlags().StringVar(&dtabUpdateVersion, "version", "",
+		"only perform update if the current version matches")
 	dtabCmd.AddCommand(dtabUpdateCmd)
 
 	dtabCmd.AddCommand(dtabDeleteCmd)

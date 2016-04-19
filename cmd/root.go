@@ -90,17 +90,18 @@ func addParentConfigPaths(dir string) {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" { // enable ability to specify config file via flag
+	if cfgFile != "" { // set on commandline
 		viper.SetConfigFile(cfgFile)
 	}
-	viper.SetConfigName(".namerctl") // name of config file (without extension)
+	viper.SetConfigName(".namerctl")
 	addParentConfigPaths(os.Getenv("PWD"))
 	viper.SetEnvPrefix("namerctl")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not use config file: %s: %s",
+			viper.ConfigFileUsed(), err)
 	}
 }
