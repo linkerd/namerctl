@@ -100,7 +100,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err != nil && viper.ConfigFileUsed() != "" {
 		fmt.Fprintln(os.Stderr, err)
 	}
 }
