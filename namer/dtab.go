@@ -23,6 +23,7 @@ var (
 // pairs. The dtab string must be validated and stripped of comments
 // before being parsed.
 func parseDtab(dtabStr string) (Dtab, error) {
+	dtabStr = strings.Replace(dtabStr, "\n", "", -1)
 	if dtabStr == "" {
 		return Dtab([]*Dentry{}), nil
 	}
