@@ -12,16 +12,22 @@ type dtabtest struct {
 var testdtabs = []dtabtest{
 	dtabtest{"", true, []*Dentry{}, ""},
 	dtabtest{
-		`/foo=>/bar;/foo=>/bah#word`,
+		"/foo=>/bar;/foo=>/bah#word",
 		true,
 		[]*Dentry{&Dentry{"/foo", "/bar"}, &Dentry{"/foo", "/bah#word"}},
 		"/foo  => /bar ;\n/foo  => /bah#word ;\n",
 	},
 	dtabtest{
-		`/foo=>/bar;/foo/bar/baz=>/bah#word;`,
+		"/foo=>/bar;/foo/bar/baz=>/bah#word;",
 		true,
 		[]*Dentry{&Dentry{"/foo", "/bar"}, &Dentry{"/foo/bar/baz", "/bah#word"}},
 		"/foo          => /bar ;\n/foo/bar/baz  => /bah#word ;\n",
+	},
+	dtabtest{
+		"/foo=>/bar;/foo/bar/baz=>/bah\n",
+		true,
+		[]*Dentry{&Dentry{"/foo", "/bar"}, &Dentry{"/foo/bar/baz", "/bah"}},
+		"/foo          => /bar ;\n/foo/bar/baz  => /bah ;\n",
 	},
 }
 
