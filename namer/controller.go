@@ -20,11 +20,11 @@ type (
 	}
 
 	Controller interface {
-		List() ([]string, error)
-		Get(name string) (*VersionedDtab, error)
-		Create(name string, dtabstr string) (Version, error)
+		List() ([]string, string, error)
+		Get(name string, requestJson bool) (*VersionedDtab, string, error)
+		Create(name string, dtabstr string, isJson bool) (Version, error)
 		Delete(name string) error
-		Update(name string, dtabstr string, version Version) (Version, error)
+		Update(name string, dtabstr string, isJson bool, version Version) (Version, error)
 	}
 
 	httpController struct {
@@ -47,42 +47,53 @@ func (ctl *httpController) dtabRequest(method, name string, data io.Reader) (*ht
 	return http.NewRequest(method, u.String(), data)
 }
 
-func (ctl *httpController) List() ([]string, error) {
+func (ctl *httpController) List() ([]string, string, error) {
 	req, err := ctl.dtabRequest("GET", "", nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	req.Header.Set("Accept", "application/json")
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer drainAndClose(rsp)
 
 	switch rsp.StatusCode {
 	case http.StatusOK:
 		var names []string
-		if err := json.NewDecoder(rsp.Body).Decode(&names); err != nil {
-			return nil, err
+		bytes, err := ioutil.ReadAll(rsp.Body)
+		if err != nil {
+			return nil, "", err
 		}
-		return names, nil
+
+		if err = json.Unmarshal(bytes, &names); err != nil {
+			return nil, "", err
+		}
+
+		return names, string(bytes), nil
 
 	default:
-		return nil, fmt.Errorf("unexpected response: %s", rsp.Status)
+		return nil, "", fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
 }
 
-func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
+func (ctl *httpController) Get(name string, requestJson bool) (*VersionedDtab, string, error) {
 	req, err := ctl.dtabRequest("GET", name, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	req.Header.Set("Accept", "application/dtab")
+
+	if requestJson {
+		req.Header.Set("Accept", "application/json")
+	} else {
+		req.Header.Set("Accept", "application/dtab")
+	}
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer drainAndClose(rsp)
 
@@ -91,25 +102,35 @@ func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 		v := Version(rsp.Header.Get("ETag"))
 		bytes, err := ioutil.ReadAll(rsp.Body)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		dtab, err := parseDtab(string(bytes))
-		if err != nil {
-			return nil, err
+
+		if requestJson {
+			return &VersionedDtab{v, nil}, string(bytes), nil
+		} else {
+			dtab, err := parseDtab(string(bytes))
+			if err != nil {
+				return nil, "", err
+			}
+			return &VersionedDtab{v, dtab}, "", nil
 		}
-		return &VersionedDtab{v, dtab}, nil
 
 	default:
-		return nil, fmt.Errorf("unexpected response: %s", rsp.Status)
+		return nil, "", fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
 }
 
-func (ctl *httpController) Create(name string, dtabstr string) (Version, error) {
+func (ctl *httpController) Create(name, dtabstr string, isJson bool) (Version, error) {
 	req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
 	if err != nil {
 		return Version(""), err
 	}
-	req.Header.Set("Content-Type", "application/dtab")
+
+	if isJson {
+		req.Header.Set("Content-Type", "application/json")
+	} else {
+		req.Header.Set("Content-Type", "application/dtab")
+	}
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
@@ -148,12 +169,16 @@ func (ctl *httpController) Delete(name string) error {
 	}
 }
 
-func (ctl *httpController) Update(name string, dtabstr string, version Version) (Version, error) {
+func (ctl *httpController) Update(name, dtabstr string, isJson bool, version Version) (Version, error) {
 	req, err := ctl.dtabRequest("PUT", name, strings.NewReader(dtabstr))
 	if err != nil {
 		return Version(""), err
 	}
-	req.Header.Set("Content-Type", "application/dtab")
+	if isJson {
+		req.Header.Set("Content-Type", "application/json")
+	} else {
+		req.Header.Set("Content-Type", "application/dtab")
+	}
 	if version != "" {
 		req.Header.Set("If-Match", string(version))
 	}

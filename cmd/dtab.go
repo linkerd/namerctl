@@ -29,11 +29,16 @@ var (
 				if err != nil {
 					return err
 				}
-				names, err := ctl.List()
+				names, json, err := ctl.List()
 				if err != nil {
 					return err
 				}
-				fmt.Println(strings.Join(names, "\n"))
+				if dtabJson {
+					fmt.Println(json)
+				} else {
+					fmt.Println(strings.Join(names, "\n"))
+				}
+
 				return nil
 
 			default:
@@ -43,6 +48,7 @@ var (
 	}
 
 	dtabGetPretty = true
+	dtabJson      = false
 
 	dtabGetCmd = &cobra.Command{
 		Use:     "get [name]",
@@ -56,17 +62,25 @@ var (
 					return err
 				}
 				name := args[0]
-				vd, err := ctl.Get(name)
+				vd, json, err := ctl.Get(name, dtabJson)
 				if err != nil {
 					return err
 				}
-				if dtabGetPretty {
+				if dtabJson {
 					if vd.Version != namer.Version("") {
-						fmt.Printf("# version %s\n", vd.Version)
+						fmt.Printf("{\"version\": \"%s\", \"dtab\": %s}", vd.Version, strings.Replace(json, "\n", "", -1))
+					} else {
+						fmt.Println(json)
 					}
-					fmt.Print(vd.Dtab.Pretty())
 				} else {
-					fmt.Println(vd.Dtab.String())
+					if dtabGetPretty {
+						if vd.Version != namer.Version("") {
+							fmt.Printf("# version %s\n", vd.Version)
+						}
+						fmt.Print(vd.Dtab.Pretty())
+					} else {
+						fmt.Println(vd.Dtab.String())
+					}
 				}
 
 				return nil
@@ -93,7 +107,7 @@ var (
 				if err != nil {
 					return err
 				}
-				_, err = ctl.Create(name, dtabstr)
+				_, err = ctl.Create(name, dtabstr, dtabJson)
 				if err != nil {
 					return err
 				}
@@ -124,7 +138,7 @@ var (
 				if err != nil {
 					return err
 				}
-				_, err = ctl.Update(name, dtabstr, namer.Version(dtabUpdateVersion))
+				_, err = ctl.Update(name, dtabstr, dtabJson, namer.Version(dtabUpdateVersion))
 				if err != nil {
 					return err
 				}
@@ -162,6 +176,8 @@ var (
 )
 
 func init() {
+	dtabCmd.PersistentFlags().BoolVar(&dtabJson, "json", false, "input/output in json instead of text")
+
 	dtabCmd.AddCommand(dtabListCmd)
 
 	dtabGetCmd.PersistentFlags().BoolVar(&dtabGetPretty, "pretty", true, "pretty-print dtabs")
