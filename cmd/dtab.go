@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,12 +30,16 @@ var (
 				if err != nil {
 					return err
 				}
-				names, json, err := ctl.List()
+				names, err := ctl.List()
 				if err != nil {
 					return err
 				}
 				if dtabJson {
-					fmt.Println(json)
+					bytes, err := json.Marshal(names)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(bytes))
 				} else {
 					fmt.Println(strings.Join(names, "\n"))
 				}
@@ -62,25 +67,23 @@ var (
 					return err
 				}
 				name := args[0]
-				vd, json, err := ctl.Get(name, dtabJson)
+				vd, err := ctl.Get(name)
 				if err != nil {
 					return err
 				}
 				if dtabJson {
+					bytes, err := json.Marshal(vd)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(bytes))
+				} else if dtabGetPretty {
 					if vd.Version != namer.Version("") {
-						fmt.Printf("{\"version\": \"%s\", \"dtab\": %s}", vd.Version, strings.Replace(json, "\n", "", -1))
-					} else {
-						fmt.Println(json)
+						fmt.Printf("# version %s\n", vd.Version)
 					}
+					fmt.Print(vd.Dtab.Pretty())
 				} else {
-					if dtabGetPretty {
-						if vd.Version != namer.Version("") {
-							fmt.Printf("# version %s\n", vd.Version)
-						}
-						fmt.Print(vd.Dtab.Pretty())
-					} else {
-						fmt.Println(vd.Dtab.String())
-					}
+					fmt.Println(vd.Dtab.String())
 				}
 
 				return nil
@@ -107,7 +110,7 @@ var (
 				if err != nil {
 					return err
 				}
-				_, err = ctl.Create(name, dtabstr, dtabJson)
+				_, err = ctl.Create(name, dtabstr)
 				if err != nil {
 					return err
 				}
@@ -138,7 +141,7 @@ var (
 				if err != nil {
 					return err
 				}
-				_, err = ctl.Update(name, dtabstr, dtabJson, namer.Version(dtabUpdateVersion))
+				_, err = ctl.Update(name, dtabstr, namer.Version(dtabUpdateVersion))
 				if err != nil {
 					return err
 				}

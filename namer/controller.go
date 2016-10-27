@@ -15,16 +15,16 @@ import (
 type (
 	Version       string
 	VersionedDtab struct {
-		Version Version
-		Dtab    Dtab
+		Version Version `json:"version"`
+		Dtab    Dtab    `json:"dtab"`
 	}
 
 	Controller interface {
-		List() ([]string, string, error)
-		Get(name string, requestJson bool) (*VersionedDtab, string, error)
-		Create(name string, dtabstr string, isJson bool) (Version, error)
+		List() ([]string, error)
+		Get(name string) (*VersionedDtab, error)
+		Create(name string, dtabstr string) (Version, error)
 		Delete(name string) error
-		Update(name string, dtabstr string, isJson bool, version Version) (Version, error)
+		Update(name string, dtabstr string, version Version) (Version, error)
 	}
 
 	httpController struct {
@@ -47,88 +47,86 @@ func (ctl *httpController) dtabRequest(method, name string, data io.Reader) (*ht
 	return http.NewRequest(method, u.String(), data)
 }
 
-func (ctl *httpController) List() ([]string, string, error) {
+func (ctl *httpController) List() ([]string, error) {
 	req, err := ctl.dtabRequest("GET", "", nil)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	defer drainAndClose(rsp)
 
 	switch rsp.StatusCode {
 	case http.StatusOK:
 		var names []string
-		bytes, err := ioutil.ReadAll(rsp.Body)
-		if err != nil {
-			return nil, "", err
+		if err := json.NewDecoder(rsp.Body).Decode(&names); err != nil {
+			return nil, err
 		}
 
-		if err = json.Unmarshal(bytes, &names); err != nil {
-			return nil, "", err
-		}
-
-		return names, string(bytes), nil
+		return names, nil
 
 	default:
-		return nil, "", fmt.Errorf("unexpected response: %s", rsp.Status)
+		return nil, fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
 }
 
-func (ctl *httpController) Get(name string, requestJson bool) (*VersionedDtab, string, error) {
+func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 	req, err := ctl.dtabRequest("GET", name, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-
-	if requestJson {
-		req.Header.Set("Accept", "application/json")
-	} else {
-		req.Header.Set("Accept", "application/dtab")
-	}
+	req.Header.Set("Accept", "application/json")
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	defer drainAndClose(rsp)
 
 	switch rsp.StatusCode {
 	case http.StatusOK:
-		v := Version(rsp.Header.Get("ETag"))
-		bytes, err := ioutil.ReadAll(rsp.Body)
-		if err != nil {
-			return nil, "", err
+		dtab := VersionedDtab{
+			Version: Version(rsp.Header.Get("ETag")),
 		}
-
-		if requestJson {
-			return &VersionedDtab{v, nil}, string(bytes), nil
-		} else {
-			dtab, err := parseDtab(string(bytes))
-			if err != nil {
-				return nil, "", err
-			}
-			return &VersionedDtab{v, dtab}, "", nil
+		if err := json.NewDecoder(rsp.Body).Decode(&dtab.Dtab); err != nil {
+			return nil, err
 		}
+		return &dtab, nil
 
 	default:
-		return nil, "", fmt.Errorf("unexpected response: %s", rsp.Status)
+		return nil, fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
 }
 
-func (ctl *httpController) Create(name, dtabstr string, isJson bool) (Version, error) {
-	req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
-	if err != nil {
-		return Version(""), err
-	}
+func isJson(str string) bool {
+	return len(str) > 0 && (str[0:1] == "{" || str[0:1] == "[")
+}
 
-	if isJson {
+func (ctl *httpController) Create(name, dtabstr string) (Version, error) {
+	var req *http.Request
+	if j := isJson(dtabstr); j {
+		var vdtab VersionedDtab
+		if err := json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
+			return Version(""), err
+		}
+		dtab, err := json.Marshal(vdtab.Dtab)
+		if err != nil {
+			return Version(""), err
+		}
+		req, err = ctl.dtabRequest("POST", name, strings.NewReader(string(dtab)))
+		if err != nil {
+			return Version(""), err
+		}
 		req.Header.Set("Content-Type", "application/json")
 	} else {
+		req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
+		if err != nil {
+			return Version(""), err
+		}
 		req.Header.Set("Content-Type", "application/dtab")
 	}
 
@@ -169,18 +167,37 @@ func (ctl *httpController) Delete(name string) error {
 	}
 }
 
-func (ctl *httpController) Update(name, dtabstr string, isJson bool, version Version) (Version, error) {
+func (ctl *httpController) Update(name, dtabstr string, version Version) (Version, error) {
+	useJson := isJson(dtabstr)
+	if useJson {
+		var vdtab VersionedDtab
+		if err := json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
+			return Version(""), err
+		}
+
+		dtab, err := json.Marshal(vdtab.Dtab)
+		if err != nil {
+			return Version(""), err
+		}
+
+		dtabstr = string(dtab)
+		if vdtab.Version != "" {
+			version = vdtab.Version
+		}
+	}
+
 	req, err := ctl.dtabRequest("PUT", name, strings.NewReader(dtabstr))
 	if err != nil {
 		return Version(""), err
 	}
-	if isJson {
+	if version != "" {
+		req.Header.Set("If-Match", string(version))
+	}
+
+	if useJson {
 		req.Header.Set("Content-Type", "application/json")
 	} else {
 		req.Header.Set("Content-Type", "application/dtab")
-	}
-	if version != "" {
-		req.Header.Set("If-Match", string(version))
 	}
 
 	rsp, err := ctl.client.Do(req)
