@@ -7,8 +7,11 @@ import (
 )
 
 type (
-	Dentry struct{ Prefix, Destination string }
-	Dtab   []*Dentry
+	Dentry struct {
+		Prefix      string `json:"prefix"`
+		Destination string `json:"dst"`
+	}
+	Dtab []*Dentry
 )
 
 func (dentry *Dentry) String() string {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -33,7 +34,16 @@ var (
 				if err != nil {
 					return err
 				}
-				fmt.Println(strings.Join(names, "\n"))
+				if dtabJson {
+					bytes, err := json.Marshal(names)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(bytes))
+				} else {
+					fmt.Println(strings.Join(names, "\n"))
+				}
+
 				return nil
 
 			default:
@@ -43,6 +53,7 @@ var (
 	}
 
 	dtabGetPretty = true
+	dtabJson      = false
 
 	dtabGetCmd = &cobra.Command{
 		Use:     "get [name]",
@@ -60,7 +71,13 @@ var (
 				if err != nil {
 					return err
 				}
-				if dtabGetPretty {
+				if dtabJson {
+					bytes, err := json.Marshal(vd)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(bytes))
+				} else if dtabGetPretty {
 					if vd.Version != namer.Version("") {
 						fmt.Printf("# version %s\n", vd.Version)
 					}
@@ -162,6 +179,8 @@ var (
 )
 
 func init() {
+	dtabCmd.PersistentFlags().BoolVar(&dtabJson, "json", false, "input/output in json instead of text")
+
 	dtabCmd.AddCommand(dtabListCmd)
 
 	dtabGetCmd.PersistentFlags().BoolVar(&dtabGetPretty, "pretty", true, "pretty-print dtabs")
