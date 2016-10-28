@@ -107,32 +107,33 @@ func isJson(str string) bool {
 }
 
 func (ctl *httpController) Create(name, dtabstr string) (Version, error) {
+	emptyVersion := Version("")
 	var req *http.Request
-	if j := isJson(dtabstr); j {
+	if isJson(dtabstr) {
 		var vdtab VersionedDtab
 		if err := json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
-			return Version(""), err
+			return emptyVersion, err
 		}
 		dtab, err := json.Marshal(vdtab.Dtab)
 		if err != nil {
-			return Version(""), err
+			return emptyVersion, err
 		}
 		req, err = ctl.dtabRequest("POST", name, strings.NewReader(string(dtab)))
 		if err != nil {
-			return Version(""), err
+			return emptyVersion, err
 		}
 		req.Header.Set("Content-Type", "application/json")
 	} else {
 		req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
 		if err != nil {
-			return Version(""), err
+			return emptyVersion, err
 		}
 		req.Header.Set("Content-Type", "application/dtab")
 	}
 
 	rsp, err := ctl.client.Do(req)
 	if err != nil {
-		return Version(""), err
+		return emptyVersion, err
 	}
 	defer drainAndClose(rsp)
 
@@ -142,7 +143,7 @@ func (ctl *httpController) Create(name, dtabstr string) (Version, error) {
 		return v, nil
 
 	default:
-		return Version(""), fmt.Errorf("unexpected response: %s", rsp.Status)
+		return emptyVersion, fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
 }
 
