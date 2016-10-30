@@ -109,6 +109,7 @@ func isJson(str string) bool {
 func (ctl *httpController) Create(name, dtabstr string) (Version, error) {
 	emptyVersion := Version("")
 	var req *http.Request
+	var err error
 	if isJson(dtabstr) {
 		var vdtab VersionedDtab
 		if err := json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
@@ -124,7 +125,7 @@ func (ctl *httpController) Create(name, dtabstr string) (Version, error) {
 		}
 		req.Header.Set("Content-Type", "application/json")
 	} else {
-		req, err := ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
+		req, err = ctl.dtabRequest("POST", name, strings.NewReader(dtabstr))
 		if err != nil {
 			return emptyVersion, err
 		}
