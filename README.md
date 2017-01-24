@@ -59,6 +59,25 @@ Global Flags:
 Use "namerctl dtab [command] --help" for more information about a command.
 ```
 
+## Docker ##
+
+### Running
+
+To use the [public image](https://hub.docker.com/r/buoyantio/namerctl/), run:
+
+```
+$ docker run --rm buoyantio/namerctl:latest --help
+namerd manages delegation tables for linkerd.
+```
+
+### Building
+
+To build your own copy of the image from source, run:
+
+```
+$ docker build -t buoyantio/namerctl:latest .
+```
+
 ## License ##
 
 Copyright 2016, Buoyant Inc. All rights reserved.
