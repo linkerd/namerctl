@@ -59,23 +59,34 @@ Global Flags:
 Use "namerctl dtab [command] --help" for more information about a command.
 ```
 
-## Docker ##
+## Development ##
 
-### Running
-
-To use the [public image](https://hub.docker.com/r/buoyantio/namerctl/), run:
+This project uses [godep](https://github.com/tools/godep) for managing go
+dependencies in the `vendor/` directory. To update dependencies, run:
 
 ```
-$ docker run --rm buoyantio/namerctl:latest --help
+$ go get github.com/tools/godep
+$ go install github.com/tools/godep
+$ godep save
+```
+
+## Docker ##
+
+### Running ###
+
+To use the [public image](https://hub.docker.com/r/linkerd/namerctl/), run:
+
+```
+$ docker run --rm linkerd/namerctl:latest --help
 namerd manages delegation tables for linkerd.
 ```
 
-### Building
+### Building ###
 
 To build your own copy of the image from source, run:
 
 ```
-$ docker build -t buoyantio/namerctl:latest .
+$ docker build -t linkerd/namerctl:latest .
 ```
 
 ## License ##

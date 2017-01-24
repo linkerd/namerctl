@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/buoyantio/namerctl",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v75",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/fsnotify/fsnotify",
