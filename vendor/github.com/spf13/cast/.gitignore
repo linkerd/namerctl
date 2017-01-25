@@ -21,6 +21,5 @@ _testmain.go
 
 *.exe
 *.test
-*.prof
 
-namerctl_*
+*.bench
