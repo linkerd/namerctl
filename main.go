@@ -1,6 +1,6 @@
 package main
 
-import "github.com/buoyantio/namerctl/cmd"
+import "github.com/linkerd/namerctl/cmd"
 
 func main() {
 	cmd.Execute()

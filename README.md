@@ -1,14 +1,14 @@
 # namerctl #
 
-A utility for controlling [namerd](https://github.com/BuoyantIO/linkerd/tree/master/namerd).
+A utility for controlling [namerd](https://github.com/linkerd/linkerd/tree/master/namerd).
 
 This utility _will change_ drastically in the near future.
 
 ## Installation ##
 
 ```
-:; go get -u github.com/BuoyantIO/namerctl
-:; go install github.com/BuoyantIO/namerctl
+:; go get -u github.com/linkerd/namerctl
+:; go install github.com/linkerd/namerctl
 ```
 
 ## Usage ##
