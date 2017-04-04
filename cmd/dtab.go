@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/buoyantio/namerctl/namer"
+	"github.com/linkerd/namerctl/namer"
 	"github.com/spf13/cobra"
 )
 
