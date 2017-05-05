@@ -1,5 +1,9 @@
 # namerctl #
 
+[![GitHub license][license-badge]](LICENSE)
+[![Circle CI][namerctl-ci-badge]][namerctl-ci]
+[![Docker Pulls][docker-badge]][docker]
+
 A utility for controlling [namerd](https://github.com/linkerd/linkerd/tree/master/namerd).
 
 This utility _will change_ drastically in the near future.
@@ -74,7 +78,7 @@ $ godep save
 
 ### Running ###
 
-To use the [public image](https://hub.docker.com/r/linkerd/namerctl/), run:
+To use the [public image][docker], run:
 
 ```
 $ docker run --rm linkerd/namerctl:latest --help
@@ -91,7 +95,7 @@ $ docker build -t linkerd/namerctl:latest .
 
 ## License ##
 
-Copyright 2016, Buoyant Inc. All rights reserved.
+Copyright 2016-2017, Buoyant Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 these files except in compliance with the License. You may obtain a copy of the
@@ -103,3 +107,10 @@ Unless required by applicable law or agreed to in writing, software distributed
 under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
+
+<!-- references -->
+[license-badge]: https://img.shields.io/github/license/linkerd/namerctl.svg
+[namerctl-ci-badge]: https://circleci.com/gh/linkerd/namerctl/tree/master.svg?style=shield
+[namerctl-ci]: https://circleci.com/gh/linkerd/namerctl
+[docker-badge]: https://img.shields.io/docker/pulls/linkerd/namerctl.svg
+[docker]: https://hub.docker.com/r/linkerd/namerctl/
