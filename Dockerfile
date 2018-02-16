@@ -1,9 +1,13 @@
-FROM library/golang:1.7.3
+FROM library/golang:1.7.3 AS build-env
 
 WORKDIR /go/src/namerctl
 
 ADD . /go/src/github.com/linkerd/namerctl
 
-RUN go build -o /go/bin/namerctl /go/src/github.com/linkerd/namerctl/main.go
+RUN go build -ldflags "-linkmode external -extldflags -static" -o /go/bin/namerctl /go/src/github.com/linkerd/namerctl/main.go
 
-ENTRYPOINT ["/go/bin/namerctl"]
+FROM scratch
+
+COPY --from=build-env /go/bin/namerctl /namerctl
+
+ENTRYPOINT ["/namerctl"]
