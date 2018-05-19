@@ -29,10 +29,10 @@ func getBaseURL() (*url.URL, error) {
 		return nil, err
 	}
 	if u.Scheme == "" || u.Host == "" {
-		return nil, errors.New("invalid base URL: " + baseURLString)
+		return nil, fmt.Errorf("invalid base URL: %s", baseURLString)
 	}
 	if u.Path != "" {
-		return nil, errors.New("base URL may not have a path: " + baseURLString)
+		return nil, fmt.Errorf("base URL may not have a path: %s", baseURLString)
 	}
 	return u, nil
 }
