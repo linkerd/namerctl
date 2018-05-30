@@ -65,13 +65,12 @@ Use "namerctl dtab [command] --help" for more information about a command.
 
 ## Development ##
 
-This project uses [godep](https://github.com/tools/godep) for managing go
-dependencies in the `vendor/` directory. To update dependencies, run:
+This project uses [dep](https://github.com/golang/dep) for managing go
+dependencies in the `vendor/` directory. To update dependencies,
+[install dep](https://github.com/golang/dep#installation) and run:
 
 ```
-$ go get github.com/tools/godep
-$ go install github.com/tools/godep
-$ godep save
+$ dep ensure
 ```
 
 ## Docker ##
