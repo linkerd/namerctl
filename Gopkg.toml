@@ -1,0 +1,11 @@
+[prune]
+  unused-packages = true
+  go-tests = true
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+  revision = "de09d9ce07d0d8a74442cfeaa91628cf9492cc23"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  revision = "5ed0fc31f7f453625df314d8e66b9791e8d13003"
