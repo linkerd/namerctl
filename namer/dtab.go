@@ -57,6 +57,9 @@ func (dtab Dtab) String() string {
 func (dtab Dtab) Pretty() string {
 	maxPfxLen := 0
 	for _, d := range dtab {
+		if d == nil {
+			continue
+		}
 		l := len(d.Prefix)
 		if l > maxPfxLen {
 			maxPfxLen = l
@@ -65,6 +68,9 @@ func (dtab Dtab) Pretty() string {
 
 	str := ""
 	for _, d := range dtab {
+		if d == nil {
+			continue
+		}
 		arrow := "=>"
 		w := maxPfxLen - len(d.Prefix) + 2
 		if w != 0 {
