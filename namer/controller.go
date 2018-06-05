@@ -39,8 +39,7 @@ func NewHttpController(baseURL *url.URL, client *http.Client) Controller {
 
 func (ctl *httpController) dtabRequest(method, name string, data io.Reader) (*http.Request, error) {
 	u := *ctl.baseURL
-	str := u.String()
-	if len(str) == 0 || str[len(str)-1] != '/' {
+	if len(u.Path) == 0 || u.Path[len(u.Path)-1] != '/' {
 		u.Path += "/"
 	}
 
