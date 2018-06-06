@@ -1,6 +1,6 @@
 package namer
 
-import "github.com/pkg/errors"
+import "errors"
 
 var (
 	// ErrNotFound is returned by Get() or Update() when the resource was not found by ID.
