@@ -39,10 +39,14 @@ func NewHttpController(baseURL *url.URL, client *http.Client) Controller {
 
 func (ctl *httpController) dtabRequest(method, name string, data io.Reader) (*http.Request, error) {
 	u := *ctl.baseURL
+	if !strings.HasSuffix(u.Path, "/") {
+		u.Path += "/"
+	}
+
 	if name == "" {
-		u.Path = "/api/1/dtabs"
+		u.Path += "api/1/dtabs"
 	} else {
-		u.Path = fmt.Sprintf("/api/1/dtabs/%s", name)
+		u.Path += fmt.Sprintf("api/1/dtabs/%s", name)
 	}
 	return http.NewRequest(method, u.String(), data)
 }
@@ -96,7 +100,8 @@ func (ctl *httpController) Get(name string) (*VersionedDtab, error) {
 			return nil, err
 		}
 		return &dtab, nil
-
+	case http.StatusNotFound:
+		return nil, ErrNotFound
 	default:
 		return nil, fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
@@ -112,14 +117,15 @@ func (ctl *httpController) Create(name, dtabstr string) (Version, error) {
 	var err error
 	if isJson(dtabstr) {
 		var vdtab VersionedDtab
-		if err := json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
+		if err = json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
 			return emptyVersion, err
 		}
-		dtab, err := json.Marshal(vdtab.Dtab)
+		var buf []byte
+		buf, err = json.Marshal(vdtab.Dtab)
 		if err != nil {
 			return emptyVersion, err
 		}
-		req, err = ctl.dtabRequest("POST", name, strings.NewReader(string(dtab)))
+		req, err = ctl.dtabRequest("POST", name, strings.NewReader(string(buf)))
 		if err != nil {
 			return emptyVersion, err
 		}
@@ -163,15 +169,16 @@ func (ctl *httpController) Delete(name string) error {
 	switch rsp.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		return nil
-
+	case http.StatusNotFound:
+		return ErrNotFound
 	default:
 		return fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
 }
 
 func (ctl *httpController) Update(name, dtabstr string, version Version) (Version, error) {
-	useJson := isJson(dtabstr)
-	if useJson {
+	useJSON := isJson(dtabstr)
+	if useJSON {
 		var vdtab VersionedDtab
 		if err := json.Unmarshal([]byte(dtabstr), &vdtab); err != nil {
 			return Version(""), err
@@ -196,7 +203,7 @@ func (ctl *httpController) Update(name, dtabstr string, version Version) (Versio
 		req.Header.Set("If-Match", string(version))
 	}
 
-	if useJson {
+	if useJSON {
 		req.Header.Set("Content-Type", "application/json")
 	} else {
 		req.Header.Set("Content-Type", "application/dtab")
@@ -212,7 +219,8 @@ func (ctl *httpController) Update(name, dtabstr string, version Version) (Versio
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		v := Version(rsp.Header.Get("ETag"))
 		return v, nil
-
+	case http.StatusNotFound:
+		return Version(""), ErrNotFound
 	default:
 		return Version(""), fmt.Errorf("unexpected response: %s", rsp.Status)
 	}
