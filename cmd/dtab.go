@@ -53,7 +53,7 @@ var (
 	}
 
 	dtabGetPretty = true
-	dtabJson      = false
+	dtabJson = false
 
 	dtabGetCmd = &cobra.Command{
 		Use:     "get [name]",
@@ -90,6 +90,80 @@ var (
 
 			default:
 				return errors.New("get requires a name argument")
+			}
+		},
+	}
+
+	dtabVersionCmd = &cobra.Command{
+		Use:     "version [name]",
+		Short:   "Get a version by name",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			switch len(args) {
+			case 1:
+				ctl, err := getController()
+				if err != nil {
+					return err
+				}
+				name := args[0]
+				vd, err := ctl.Get(name)
+				if err != nil {
+					return err
+				}
+
+				fmt.Println(vd.Version)
+
+				return nil
+
+			default:
+				return errors.New("get requires a name argument")
+			}
+		},
+	}
+
+	dtabSetCmd = &cobra.Command{
+		Use:     "set [name] [prefix] [destination]",
+		Short:   "Update a dtab destination by name",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			switch len(args) {
+			case 3:
+				ctl, err := getController()
+				if err != nil {
+					return err
+				}
+				name := args[0]
+				vd, err := ctl.Get(name)
+				if err != nil {
+					return err
+				}
+
+				prefix := args[1]
+				destination := args[2]
+
+				found := false
+				for _, dtab := range vd.Dtab {
+					if dtab.Prefix == "/" + prefix {
+						dtab.Destination = destination
+						found = true
+					}
+				}
+
+				if ! found {
+					vd.Dtab = append(vd.Dtab, &namer.Dentry{
+						Prefix: "/" + prefix,
+						Destination: destination,
+					})
+				}
+
+				_, err = ctl.Update(name, vd.Dtab.String(), vd.Version)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Updated %s\n", name)
+
+				return nil
+
+			default:
+				return errors.New("get requires a name, prefix and destination arguments")
 			}
 		},
 	}
@@ -185,6 +259,10 @@ func init() {
 
 	dtabGetCmd.PersistentFlags().BoolVar(&dtabGetPretty, "pretty", true, "pretty-print dtabs")
 	dtabCmd.AddCommand(dtabGetCmd)
+
+	dtabCmd.AddCommand(dtabVersionCmd)
+
+	dtabCmd.AddCommand(dtabSetCmd)
 
 	dtabCmd.AddCommand(dtabCreateCmd)
 
